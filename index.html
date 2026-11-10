@@ -8142,7 +8142,7 @@ function act(a,el,ev){
     case 'shplay':{var ls=LIDX[id],els2=$$('.sh'),tx=els2.map(function(e){return e.getAttribute('data-en')});playList(els2,tx,!!el.getAttribute('data-slow'));break}
     case 'sayread':{var l2=LIDX[RD.id];playList([],l2.read.paras.map(plain),false);break}
     /* --- reading stepper --- */
-    case 'rdstep':RD.step=+el.getAttribute('data-s');if(RD.step===1&&!RD.readSec)RD.t0=now();rerenderReading();break;
+    case 'rdstep':RD.step=+el.getAttribute('data-s');if(RD.step===1&&!RD.readSec)RD.t0=now();rerenderReading();window.scrollTo(0,0);break;
     case 'rdread':{RD.readSec=(now()-RD.t0)/1000;var rr=S.read[RD.id]||(S.read[RD.id]={sec:0,hints:0,lookups:0});rr.readSec=RD.readSec;save();rerenderReading();break}
     case 'rdgist':{
       var lg=LIDX[RD.id],g=lg.read.gist,i5=+el.getAttribute('data-i');RD.gist=i5;
