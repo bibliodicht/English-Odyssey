@@ -60,6 +60,13 @@ html[data-theme="dark"] .btn{color:#10151f}
 .btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
 .btn.sm{min-height:36px;padding:4px 10px;font-size:.85rem}
 .btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.lg{min-height:52px;padding:10px 24px;font-size:1.08rem;font-weight:700}
+.card.cta{border:2px solid var(--accent)}
+.flow3{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.85rem;color:var(--ink2);margin:8px 0}
+.flow3 .on{font-weight:700;color:var(--accent)}
+details.tbx{border:0;background:none;padding:0;margin:0;box-shadow:none}
+details.tbx summary{cursor:pointer;color:var(--ink2);font-size:.85rem;padding:6px 4px}
+.speak{opacity:.75}
 .btn.danger{border-color:var(--ng);background:transparent;color:var(--ng)}
 .speak{min-height:36px;min-width:36px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);background:var(--bg2);cursor:pointer;font-size:.85rem}
 .speak.playing{background:var(--hl);border-color:var(--gold)}
@@ -1037,21 +1044,19 @@ function homeHTML(){
   if(!S.diag){
     h+='<div class="card" style="border-color:var(--gold)"><b>🧭 まずは現在地を確認しましょう</b><p class="muted small">約5〜15分のレベル診断。易しい問題から始まり、答えに応じて難しさが変わります。確定的な能力判定ではなく、学習を始める目安です。</p><div class="row"><a class="btn" href="#/diag">レベル診断を受ける</a><a class="btn ghost" href="#/route/A">診断せずに始める</a></div></div>';
   }
+  var due=dueItems().length,weak=weakItems().length;
+  // next goal
+  var rec=recommend();
+  h+='<div class="card cta"><b>▶ 今日はここから</b>';
+  if(due>0)h+='<p>復習待ちが '+due+' 問あります。まず復習から。</p><a class="btn lg" href="#/review">復習する →</a>';
+  else if(rec.lesson)h+='<p>おすすめレッスン：<a href="#/lesson/'+esc(rec.lesson.id)+'">'+esc(rec.lesson.title)+'</a> <span class="badge lv">LV'+rec.lesson.lv+'</span></p><a class="btn" href="#/lesson/'+esc(rec.lesson.id)+'">始める</a>';
+  else h+='<p>登録されているレッスンはすべて完了しています。復習で定着度を上げましょう。</p>';
+  h+='</div>';
   var cl=currentLevel(),dm=Math.floor((S.time[d]||0)/60);
   h+='<div class="grid g3"><div class="card stat"><span class="muted small">現在のレベル</span><b>LEVEL '+cl+'</b><span class="small">'+LV_NAMES[cl]+'</span></div>';
   h+='<div class="card stat"><span class="muted small">総合進捗（習熟度ベース）</span><b>'+pct(overallProgress())+'%</b>'+bar(overallProgress())+'</div>';
   h+='<div class="card stat"><span class="muted small">連続学習</span><b>'+(S.streak.last===d||S.streak.last===dayStr(now()-86400000)?S.streak.days:0)+'日</b><span class="small">最長 '+(S.streak.best||0)+'日</span></div></div>';
-  h+='<div class="grid g3"><div class="card stat"><span class="muted small">今日の学習時間</span><b><span id="todaymin">'+dm+'</span>分</b><span class="small">目標 '+(S.settings.course==='3m'?'120〜180':'30〜60')+'分</span></div>';
-  h+='<div class="card stat"><span class="muted small">触れた表現 / 習得した表現</span><b>'+ec.touched+' / '+ec.mastered+'</b><span class="small">全 '+ec.total+' 件中</span></div>';
-  var due=dueItems().length,weak=weakItems().length;
-  h+='<div class="card stat"><span class="muted small">復習待ち</span><b>'+due+'</b><span class="small">苦手 '+weak+' 問</span></div></div>';
-  // next goal
-  var rec=recommend();
-  h+='<div class="card"><b>次の目標</b>';
-  if(due>0)h+='<p>復習待ちが '+due+' 問あります。まず復習から。</p><a class="btn" href="#/review">復習する</a>';
-  else if(rec.lesson)h+='<p>おすすめレッスン：<a href="#/lesson/'+esc(rec.lesson.id)+'">'+esc(rec.lesson.title)+'</a> <span class="badge lv">LV'+rec.lesson.lv+'</span></p><a class="btn" href="#/lesson/'+esc(rec.lesson.id)+'">始める</a>';
-  else h+='<p>登録されているレッスンはすべて完了しています。復習で定着度を上げましょう。</p>';
-  h+='</div>';
+  h+='<p class="small muted">今日の学習 <span id="todaymin">'+dm+'</span>分（目標 '+(S.settings.course==='3m'?'120〜180':'30〜60')+'分）・表現 触れた '+ec.touched+' / 習得 '+ec.mastered+'（全 '+ec.total+'）・復習待ち '+due+'（苦手 '+weak+'問）</p>';
   h+='<h2>4つのエリア</h2><div class="grid g2">';
   ['A','B','C','D'].forEach(function(r){
     var R=ROUTES[r],ls=lessonsOf(r),dn=routeDoneCount(r);
@@ -1060,7 +1065,7 @@ function homeHTML(){
   h+='</div>';
   var sk=skillStats().filter(function(s){return s.acc<0.7}).slice(0,4);
   if(sk.length){h+='<h2>あなたの苦手分野（誤答から判定）</h2><div class="card">';sk.forEach(function(s){h+='<div class="row small"><span style="min-width:8em">'+esc(skName(s.k))+'</span><span class="sp">'+bar(s.acc)+'</span><span>正答率 '+pct(s.acc)+'%（'+s.n+'問）</span></div>'});h+='<a class="btn sm sec" href="#/review">苦手を集中復習</a></div>'}
-  h+='<h2>クイックメニュー</h2><div class="row"><a class="btn sec" href="#/course">コース選択</a><a class="btn sec" href="#/pron">発音ガイド</a><a class="btn sec" href="#/ach">実績</a><a class="btn sec" href="#/history">学習履歴</a><a class="btn sec" href="#/settings">設定</a></div>';
+  h+='<h2>その他</h2><div class="row"><a class="btn ghost sm" href="#/course">コース選択</a><a class="btn ghost sm" href="#/pron">発音ガイド</a><a class="btn ghost sm" href="#/ach">実績</a><a class="btn ghost sm" href="#/history">学習履歴</a><a class="btn ghost sm" href="#/settings">設定</a></div>';
   return h;
 }
 
@@ -1132,7 +1137,7 @@ function applySettings(){
   document.body.classList.toggle('hideja',!showJa());
 }
 function toolbar(){
-  return '<div class="row small" style="margin:6px 0"><button class="btn ghost sm" data-act="toggleja">日本語訳：'+(showJa()?'表示中':'非表示')+'</button><button class="btn ghost sm" data-act="fs" data-d="-0.1" aria-label="文字を小さく">A−</button><button class="btn ghost sm" data-act="fs" data-d="0.1" aria-label="文字を大きく">A＋</button><button class="btn ghost sm" data-act="stopsay">■ 音声停止</button>'+(AUD.ok?'':'<span class="badge ng">音声合成は使えません</span>')+'</div>';
+  return '<div class="row small" style="margin:6px 0"><button class="btn ghost sm" data-act="toggleja">日本語訳：'+(showJa()?'表示中':'非表示')+'</button><details class="tbx"><summary>文字サイズ・音声停止</summary><div class="row" style="margin-top:6px"><button class="btn ghost sm" data-act="fs" data-d="-0.1" aria-label="文字を小さく">A−</button><button class="btn ghost sm" data-act="fs" data-d="0.1" aria-label="文字を大きく">A＋</button><button class="btn ghost sm" data-act="stopsay">■ 音声停止</button></div></details>'+(AUD.ok?'':'<span class="badge ng">音声合成は使えません</span>')+'</div>';
 }
 function jaLine(t,cls){return t?'<div class="ja jaline small '+(cls||'')+'">'+fmt(t)+'</div>':''}
 
@@ -1147,6 +1152,7 @@ function lessonHTML(id){
   var h='<div class="small"><a href="#/route/'+l.route+'">← ROUTE '+l.route+'：'+esc(R.name)+'</a></div>';
   h+='<h1>'+esc(l.title)+'</h1><div class="row"><span class="badge lv">LEVEL '+l.lv+' '+LV_NAMES[l.lv]+'</span><span class="badge">'+esc(l.stage||'')+'</span><span class="badge">習熟 '+st+'/5：'+EST[st]+'</span>'+(lessonDone(l)?'<span class="badge ok">✓ 完了</span>':'')+'</div>';
   h+='<div class="card"><b>🎯 目標</b><div>'+fmt(l.goal||'')+'</div>'+(l.intro?'<div class="muted" style="margin-top:6px">'+fmt(l.intro)+'</div>':'')+'</div>';
+  h+='<div class="flow3"><span class="on">① 読む・聞く</span><span>→</span><span class="on">② 練習問題</span><span>→</span><span>③ 余裕があれば応用</span></div>';
   h+=toolbar();
   if(l.route==='B'&&l.read){
     if(!RD||RD.id!==l.id)RD={id:l.id,step:1,t0:now(),gist:null,hintN:0,chunk:{},sumShown:false};
@@ -1200,7 +1206,7 @@ function blockHTML(b,l,bi){
     h+='<div class="card flat" style="padding:0;margin:8px 0"><b>🔑 重要表現</b>'+(b.ids||[]).map(exprMini).join('')+'</div>';
   }else if(k==='cmp'){
     var c=null;DATA.cmp.forEach(function(x){if(x.id===b.id)c=x});
-    if(c)h+='<div class="card">'+cmpTable(c)+'<a class="btn sm sec" href="#/compare/'+esc(c.id)+'">比較ページで開く</a></div>';
+    if(c)h+='<div class="card">'+cmpTable(c)+'<a class="btn sm ghost" href="#/compare/'+esc(c.id)+'">比較ページで開く</a></div>';
   }else if(k==='poem'){
     var pid='poem'+bi;
     h+='<div class="card"><div class="row"><b>'+esc(b.title||'')+'</b>'+(b.by?'<span class="small muted">'+esc(b.by)+'</span>':'')+'<span class="sp"></span>'+(AUD.ok?'<button class="btn sm sec" data-act="playall" data-c="'+pid+'">▶ 朗読（合成音声）</button><button class="btn sm ghost" data-act="playall" data-c="'+pid+'" data-slow="1">▶ ゆっくり</button>':'')+'</div><div class="poem" id="'+pid+'">';
@@ -1214,13 +1220,13 @@ function blockHTML(b,l,bi){
   return h;
 }
 function lessonActions(l){
-  var qn=(l.qs||[]).length,h='<h2>練習</h2><div class="card">';
-  h+='<div class="row"><button class="btn sec" data-act="understood" data-id="'+esc(l.id)+'">✓ 内容を理解した（自己確認）</button><span class="small muted">'+(S.prog[l.id]&&S.prog[l.id].steps?'確認済み':'読んで理解できたら押します')+'</span></div>';
-  if(qn)h+='<div class="row" style="margin-top:10px"><button class="btn" data-act="startlesson" data-id="'+esc(l.id)+'">練習問題に進む（'+qn+'問）</button><span class="small muted">70%以上で完了</span></div>';
-  if(l.rp&&DATA.rp[l.rp])h+='<div class="row" style="margin-top:10px"><a class="btn sec" href="#/rp/'+esc(l.rp)+'">🎭 ロールプレイ：'+esc(DATA.rp[l.rp].title)+'</a></div>';
+  var qn=(l.qs||[]).length,h='<h2 id="practice">② 練習問題</h2>';
+  if(qn)h+='<div class="card cta"><p style="margin:0 0 10px">ここまで読んだら、練習問題で確認します（'+qn+'問・70%以上で完了）。</p><button class="btn lg" data-act="startlesson" data-id="'+esc(l.id)+'">練習問題に進む →</button></div>';
   var hasText=(l.blocks||[]).some(function(b){return b.k==='dialog'||b.k==='poem'})||(l.read&&l.read.paras);
-  if(hasText)h+='<div class="row" style="margin-top:10px"><a class="btn ghost" href="#/shadow/'+esc(l.id)+'">🎧 シャドーイング練習</a></div>';
-  h+='</div>';
+  var more='';
+  if(l.rp&&DATA.rp[l.rp])more+='<a class="btn ghost sm" href="#/rp/'+esc(l.rp)+'">🎭 ロールプレイ：'+esc(DATA.rp[l.rp].title)+'</a> ';
+  if(hasText)more+='<a class="btn ghost sm" href="#/shadow/'+esc(l.id)+'">🎧 シャドーイング</a>';
+  if(more)h+='<h3>③ 余裕があれば（任意）</h3><div class="row">'+more+'</div>';
   // same expressions in other lessons
   var rel=[],seen={};
   (l._expr||[]).forEach(function(id){var e=EIDX[id];if(e)e.lessons.forEach(function(lid){if(lid!==l.id&&!seen[lid]&&rel.length<4){seen[lid]=1;rel.push(LIDX[lid])}})});
@@ -8123,6 +8129,7 @@ function act(a,el,ev){
       startQuiz({mode:QS.mode==='lesson'?'lesson':'review',title:QS.title+'（やり直し）',items:items,lessonId:QS.lessonId,back:QS.back,extra:{retry:true}});break}
     case 'startlesson':{
       var l=LIDX[id];if(!l||!(l.qs||[]).length)break;
+      (function(){var pp=S.prog[l.id]||(S.prog[l.id]={att:0,best:0});pp.steps=Math.max(1,pp.steps||0);save()})();
       startQuiz({mode:'lesson',title:l.title,items:l.qs.map(function(q){return {q:q,l:l}}),lessonId:l.id,back:'#/lesson/'+l.id});break}
     case 'bossgo':{
       var p=el.getAttribute('data-key').split('-'),items2=buildBoss(p[0],+p[1]);
